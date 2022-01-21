@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+
     <CatalogCategories />
   </div>
 </template>
@@ -7,10 +8,11 @@
 <script>
 import CatalogCategories from './components/CatalogCategories.vue'
 
+
 export default {
   name: 'App',
   components: {
-    CatalogCategories
+    CatalogCategories,
   }
 }
 </script>

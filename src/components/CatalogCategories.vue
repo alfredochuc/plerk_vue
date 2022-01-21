@@ -5,8 +5,10 @@
         Buscar un beneficio : 
         <input type="text"  v-model="searchQuery" placeholder="Buscar">
       </div>
+      <div class="loading-ac" v-show="showLoading">
+        <bounce-loader :loading="showLoading" :color="color" :size="size"></bounce-loader>
+      </div>
       <div v-if="resultQuery.length" >
-
         <div class="container-categories">
           <div v-for='category in resultQuery' :key="category.uuid4" class="card" >
             <div class="card-img">
@@ -24,16 +26,19 @@
         </div>
       </div>
       <div v-else>
-        <div class="warning">No hay categorías</div>
+        <div class="warning" v-show="!showLoading">No hay categorías</div>
       </div>
   </div>
 </template>
 
 <script>
 import axios from "axios"
-// axios.defaults.headers.common['Authorization'] = '3d49fb0924d5b5a86cf5fcc66e31347f0bef65715ccb66f59a30b6ffe33d1e86f15040a40e16b11f26cb82940c9d4d988a074d8d1d82c4a3fba077dafd34844f';
+import BounceLoader from 'vue-spinner/src/BounceLoader.vue'
 export default {
   name: 'CatalogCategories',
+  components: {
+    BounceLoader
+  },
   props: {
     msg: String
   },
@@ -41,27 +46,62 @@ export default {
     return {
       categories:[],
       searchQuery: '',
-      categoryTypes: ['Normal','Libre','Personalizada']
+      showLoading: true,
+      color: "#38B6DF",
+      size: "90px"
     }
   },
   created() {
-    axios.get('https://apitesting.plerk.io/v2/category', {
-      headers: {
-        'Authorization': `5bc95bf034d900548243a59e2296bd683729bd75057879fd0f877d3adc7d1db6bedbfccb47aca04e44ef28adf4c3e9e72afe2f2b295b3bf08e2a47ec75f9607d`
-      }
-    })
-    .then((res) => {
-      this.categories = res.data.data;
-    })
-    .catch((error) => {
-      console.error(error)
-    })
+     this.getCategories();
   },
   computed: {
     resultQuery() {
       return this.categories.filter(category => {
         return category.name.esp.toLowerCase().includes(this.searchQuery.toLowerCase())
       })
+    }
+  },
+  methods: {
+    getCategories(){
+       var self = this;
+        axios.interceptors.request.use(function (config) {
+          self.show_loading();
+          console.log(self.showLoading);
+          return config;
+        }, function (error) {
+          console.error(error)
+          return Promise.reject(error);
+        });
+
+        // Add a response interceptor
+        axios.interceptors.response.use(function (response) {
+          self.hide_loading();
+          // self.show_loading();
+          console.log(self.showLoading);
+          return response;
+        }, function (error) {
+          console.error(error)
+          return Promise.reject(error);
+        });
+
+      axios.get('https://apitesting.plerk.io/v2/category', {
+        headers: {
+          'Authorization': `5bc95bf034d900548243a59e2296bd683729bd75057879fd0f877d3adc7d1db6bedbfccb47aca04e44ef28adf4c3e9e72afe2f2b295b3bf08e2a47ec75f9607d`
+        }
+      })
+      .then((res) => {
+        this.categories = res.data.data;
+        //  self.hide_loading();
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+    },
+    show_loading(){
+      this.showLoading = true;
+    },
+    hide_loading(){
+      this.showLoading = false;	
     }
   },
   filters: {
@@ -85,8 +125,6 @@ export default {
     },
     currency: function (value) {
       if (!value) return ''
-      // return "$ " + value.toFixed(2).toLocaleString() + " USD";
-
        if (typeof value !== "number") {
           return value;
       }
@@ -115,7 +153,6 @@ h1{
   margin-top: 50px;
   display: grid;
   grid-template-columns: repeat(4, minmax(200px, 1fr));
-  /* grid-template-rows: repeat(2, 200px); */
   grid-gap: 2rem;
 }
 .img-responsive{
@@ -131,7 +168,6 @@ h1{
 .card .row-type-price{
   display: flex;
   justify-content: space-between;
-  /* align-items: ; */
 }
 .card-body{
   overflow: hidden;
@@ -139,12 +175,26 @@ h1{
 
 .warning{
   margin-top: 40px;
-  background-color: burlywood;
+  background-color: #FEEFB3;
   padding: 15px 20px;
-  border-radius: 10px;
+  border-radius: 5px;
   font-weight: 500;
 }
-
+.loading-ac{
+  background-color: rgba(0, 0, 0, 0.3);
+  position: fixed;
+  top:0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  width: 100vw;
+}
+.v-spinner{
+ position: absolute;
+  top: 50%;
+  left: 50%;
+  margin: -45px 0 0 -45px;
+}
 @media only all and (max-width: 1024px) {
   .container-categories{
     width: 90%;
